@@ -1,3 +1,4 @@
+#coding:utf-8
 import sys
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, 
                              QTreeView, QHBoxLayout, QLineEdit, QMessageBox)
@@ -10,12 +11,13 @@ class Item:
 
 class DynamicGroupModel(QAbstractItemModel):
     def __init__(self):
-        super().__init__()
+        super(DynamicGroupModel,self).__init__()
         self._items = []
         self._grouped = False
         self._categories = set()
 
     def index(self, row, column, parent=QModelIndex()):
+        # 负责创建index, 但index 是否有parent,并不在这里处理
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
         
@@ -26,13 +28,14 @@ class DynamicGroupModel(QAbstractItemModel):
                 return self.createIndex(row, column, self._items[row])
         
         parent_item = parent.internalPointer()
-        if isinstance(parent_item, str):  # It's a category
+        if isinstance(parent_item, (unicode,str)):  # It's a category， 注意Python2/3的不同
             children = [item for item in self._items if item.category == parent_item]
             return self.createIndex(row, column, children[row])
         
         return QModelIndex()
 
     def parent(self, index):
+        # 这里负责Index的父子关系，
         if not index.isValid():
             return QModelIndex()
         
@@ -50,7 +53,7 @@ class DynamicGroupModel(QAbstractItemModel):
         if not parent.isValid():
             return len(self._categories) if self._grouped else len(self._items)
         
-        if self._grouped and isinstance(parent.internalPointer(), str):
+        if self._grouped and isinstance(parent.internalPointer(), str): # 注意python2/3的不同
             category = parent.internalPointer()
             return len([item for item in self._items if item.category == category])
         
